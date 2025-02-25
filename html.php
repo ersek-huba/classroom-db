@@ -80,7 +80,7 @@ function showClassDropdown($mysqli)
     echo '</select><br>';
 }
 
-function showQueryButton()
+function showQueryButton($mysqli)
 {
     if (!checkDatabase($mysqli, "schoolbook")) return;
     echo '<button type="submit" name="query" value="0">Adatok lekérése</button>';
@@ -204,6 +204,6 @@ function handlePostRequest($mysqli)
     }
     else if (isset($_POST["query"]))
     {
-        
+        showClassStatistics($mysqli);
     }
 }

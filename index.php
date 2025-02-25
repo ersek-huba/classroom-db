@@ -9,6 +9,7 @@ formHead();
 showInstallButton($mysqli);
 showYearDropdown($mysqli);
 showClassDropdown($mysqli);
+showQueryButton($mysqli);
 formEnd();
 handlePostRequest($mysqli);
 htmlEnd();
