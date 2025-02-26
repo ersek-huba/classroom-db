@@ -9,14 +9,35 @@ body {
     max-width: 50%;
     padding: 10px;
     border-radius: 10px;
+    align-items: center
 }
 
 .center {
     text-align: center;
 }
 
+p, li {
+    font-size: 150%;
+}
+
+.center-table {
+    margin: 0px auto;
+    border: 1px solid black
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+th, td {
+    font-size: 150%;
+    padding: 5px 5px;
+}
+
 .list-elem {
     list-style-type: none;
+    width: 100%;
 }
 /*
 select {

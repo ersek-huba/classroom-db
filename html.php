@@ -146,13 +146,14 @@ function installDatabase($mysqli)
     }
 }
 
-// osztályátlag, tantárgyanként, tanulók, tanulók átlagai, tantárgyanként
+// tanulók, tanulók átlagai, tantárgyanként
 function showClassStatistics($mysqli)
 {
     if (!checkDatabase($mysqli, "schoolbook")) return;
     if (isset($_POST["year"]) && isset($_POST["class"]))
     {
         showClassAverages($mysqli);
+        showStudentData($mysqli);
     }
 }
 
@@ -197,15 +198,90 @@ function showClassAverages($mysqli)
         $avg = $result->fetch_column();
         $classAveragesPerSubjects[$subject] = $avg;
     }
-    echo "<h2 class='center'>$class</h2>";
+    echo "<h1 class='center'>$class</h2>";
     echo "<p class='center'>Osztályátlag: $classAverage</p><br>";
-    echo "<h2 class='center'>Átlag tantárgyanként</h2>";
+    echo "<h1 class='center'>Átlag tantárgyanként</h2>";
     echo "<ul>";
     foreach ($classAveragesPerSubjects as $subject => $average)
     {
         echo "<li class='center list-elem'>$subject: $average</li>";
     }
     echo "</ul>";
+}
+
+function getStudentsOfClass($mysqli, $year, $class)
+{
+    $mysqli->select_db("schoolbook");
+    $query = "SELECT name, gender
+                FROM students st JOIN classes c ON st.class_id = c.id
+                WHERE c.year = $year AND c.code = '$class'";
+    return $mysqli->execute_query($query);
+}
+
+function getStudentGrades($mysqli, $name)
+{
+    $mysqli->select_db("schoolbook");
+    $query = "SELECT su.name as 'subject', grade
+                FROM students st JOIN grades g ON st.id = g.student_id JOIN subjects su ON su.id = g.subject_id
+                WHERE st.name = '$name'/* AND su.name = 'subject'*/
+                ORDER BY 1";
+    return $mysqli->execute_query($query);
+}
+
+function showStudentData($mysqli)
+{
+    $year = $_POST["year"];
+    $class = $_POST["class"];
+    $result = getStudentsOfClass($mysqli, $year, $class);
+    if (!$result)
+    {
+        showMessage("Hiba: Nem sikerült lekérni a diákokat!", true);
+        return;
+    }
+    echo "<table class='center-table'>";
+    echo "<tr>
+      <th>Név</th>
+      <th>Nem</th>
+      <th>Jegyek</th>
+    </tr>";
+    $students = $result->fetch_all(MYSQLI_ASSOC);
+    foreach ($students as $student)
+    {
+        $result = getStudentGrades($mysqli, $student['name']);
+        if (!$result)
+        {
+            showMessage("Hiba: Nem sikerült lekérni a tanuló jegyeit!", true);
+            return;
+        }
+        echo "<tr>";
+        echo "<td>" . $student['name'] . "</td>";
+        echo "<td>" . ($student['gender'] === 0 ? "férfi" : "nő") . "</td>";
+        echo "<td>";
+        showGrades($result);
+        echo "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+}
+
+function showGrades($result)
+{
+    $grades = [];
+    $gradeResult = $result->fetch_all(MYSQLI_ASSOC);
+    foreach ($gradeResult as $grade)
+    {
+        $subject = $grade['subject'];
+        $gradeNum = $grade['grade'];
+        if (!isset($grades[$subject]))
+        {
+            $grades[$subject] = [];
+        }
+        $grades[$subject][] = $gradeNum;
+    }
+    foreach ($grades as $subject => $gradeNums)
+    {
+        echo "$subject: " . implode(", ", $gradeNums) . "<br>";
+    }
 }
 
 function handlePostRequest($mysqli)

@@ -1,5 +1,5 @@
 <?php
-function getSQLConnection($host = "localhost", $user = "root", $password = "huba", $database = NULL)
+function getSQLConnection($host = "localhost", $user = "root", $password = "", $database = NULL)
 {
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $mysqli = new mysqli($host, $user, $password, $database);
@@ -90,6 +90,7 @@ function insertDataIntoStudents($mysqli)
     $result = $mysqli->execute_query("SELECT id FROM `schoolbook`.`classes`");
     if (!$result) return false;
     $classes = $result->fetch_all(MYSQLI_ASSOC);
+    $existingNames = [];
     foreach ($classes as $class)
     {
         $classId = $class['id'];
@@ -97,9 +98,13 @@ function insertDataIntoStudents($mysqli)
         for ($count = 0; $count < $classCount; $count++)
         {
             $gender = rand(0, 1);
-            $lastName = NAMES['lastnames'][array_rand(NAMES['lastnames'])];
-            $firstName = NAMES['firstnames'][$gender === 0 ? 'men' : 'women'][array_rand(NAMES['firstnames'][$gender === 0 ? 'men' : 'women'])];
-            $name = $lastName . ' ' . $firstName;
+            do
+            {
+                $lastName = NAMES['lastnames'][array_rand(NAMES['lastnames'])];
+                $firstName = NAMES['firstnames'][$gender === 0 ? 'men' : 'women'][array_rand(NAMES['firstnames'][$gender === 0 ? 'men' : 'women'])];
+                $name = $lastName . ' ' . $firstName;
+            } while (in_array($name, $existingNames));
+            $existingNames[] = $name;
             $result = $mysqli->execute_query("INSERT INTO `schoolbook`.`students` (name, gender, class_id) VALUES ('$name', $gender, $classId);");
             if (!$result) return false;
         }
