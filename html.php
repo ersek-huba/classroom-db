@@ -37,7 +37,7 @@ function formEnd()
 function showInstallButton($mysqli)
 {
     if (checkDatabase($mysqli, "schoolbook")) return;
-    echo '<button type="submit" name="install" value="0">Adatbázis létrehozása, és feltöltése</button>';
+    echo '<button type="submit" name="install" value="0" class="center">Adatbázis létrehozása, és feltöltése</button>';
 }
 
 function showYearDropdown($mysqli)
@@ -50,8 +50,8 @@ function showYearDropdown($mysqli)
         return;
     }
     $years = $result->fetch_all();
-    echo '<label for="year">Évfolyam </label>';
-    echo '<select name="year" id="year">';
+    echo '<label for="year" class="center">Évfolyam </label>';
+    echo '<select name="year" id="year" class="center">';
     foreach ($years as $year)
     {
         $year = $year[0];
@@ -70,8 +70,8 @@ function showClassDropdown($mysqli)
         return;
     }
     $classes = $result->fetch_all();
-    echo '<label for="class">Osztály </label>';
-    echo '<select name="class">';
+    echo '<label for="class" class="center">Osztály </label>';
+    echo '<select name="class" class="center">';
     foreach ($classes as $class)
     {
         $class = $class[0];
@@ -83,7 +83,7 @@ function showClassDropdown($mysqli)
 function showQueryButton($mysqli)
 {
     if (!checkDatabase($mysqli, "schoolbook")) return;
-    echo '<button type="submit" name="query" value="0">Adatok lekérése</button>';
+    echo '<button type="submit" name="query" value="0" class="center">Adatok lekérése</button>';
 }
 
 function showMessage($msg, $error = false)
@@ -152,33 +152,13 @@ function showClassStatistics($mysqli)
     if (!checkDatabase($mysqli, "schoolbook")) return;
     if (isset($_POST["year"]) && isset($_POST["class"]))
     {
-        $year = $_POST["year"];
-        $class = $_POST["class"];
-        $result = getClassAverage($mysqli, $year, $class);
-        if (!$result)
-        {
-            showMessage("Hiba: Nem sikerült osztály átlagot lekérni!", true);
-            return;
-        }
-        $classAverage = $result->fetch_column();
-        $classAveragesPerSubjects = [];
-        foreach (SUBJECTS as $subject)
-        {
-            $result = getClassAveragePerSubject($mysqli, $year, $class, $subject);
-            if (!$result)
-            {
-                showMessage("Hiba: Nem sikerült osztály átlagot lekérni!", true);
-                return;
-            }
-            $avg = $result->fetch_column();
-            $classAveragesPerSubjects[] = $avg;
-        }
-        
+        showClassAverages($mysqli);
     }
 }
 
 function getClassAverage($mysqli, $year, $class)
 {
+    $mysqli->select_db("schoolbook");
     $query = "SELECT AVG(grade)
                 FROM grades g JOIN students s ON g.student_id = s.id JOIN classes c ON s.class_id = c.id
                 WHERE c.year = $year AND c.code = '$class'";
@@ -187,10 +167,45 @@ function getClassAverage($mysqli, $year, $class)
 
 function getClassAveragePerSubject($mysqli, $year, $class, $subject)
 {
+    $mysqli->select_db("schoolbook");
     $query = "SELECT AVG(grade)
                 FROM grades g JOIN students st ON g.student_id = st.id JOIN classes c ON st.class_id = c.id JOIN subjects su ON g.subject_id = su.id
                 WHERE c.year = $year AND c.code = '$class' AND su.name = '$subject'";
     return $mysqli->execute_query($query);
+}
+
+function showClassAverages($mysqli)
+{
+    $year = $_POST["year"];
+    $class = $_POST["class"];
+    $result = getClassAverage($mysqli, $year, $class);
+    if (!$result)
+    {
+        showMessage("Hiba: Nem sikerült osztály átlagot lekérni!", true);
+        return;
+    }
+    $classAverage = $result->fetch_column();
+    $classAveragesPerSubjects = [];
+    foreach (SUBJECTS as $subject)
+    {
+        $result = getClassAveragePerSubject($mysqli, $year, $class, $subject);
+        if (!$result)
+        {
+            showMessage("Hiba: Nem sikerült osztály átlagot lekérni!", true);
+            return;
+        }
+        $avg = $result->fetch_column();
+        $classAveragesPerSubjects[$subject] = $avg;
+    }
+    echo "<h2 class='center'>$class</h2>";
+    echo "<p class='center'>Osztályátlag: $classAverage</p><br>";
+    echo "<h2 class='center'>Átlag tantárgyanként</h2>";
+    echo "<ul>";
+    foreach ($classAveragesPerSubjects as $subject => $average)
+    {
+        echo "<li class='center list-elem'>$subject: $average</li>";
+    }
+    echo "</ul>";
 }
 
 function handlePostRequest($mysqli)
