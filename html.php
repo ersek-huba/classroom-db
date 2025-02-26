@@ -146,7 +146,6 @@ function installDatabase($mysqli)
     }
 }
 
-// tanulók, tanulók átlagai, tantárgyanként
 function showClassStatistics($mysqli)
 {
     if (!checkDatabase($mysqli, "schoolbook")) return;
@@ -214,7 +213,8 @@ function getStudentsOfClass($mysqli, $year, $class)
     $mysqli->select_db("schoolbook");
     $query = "SELECT name, gender
                 FROM students st JOIN classes c ON st.class_id = c.id
-                WHERE c.year = $year AND c.code = '$class'";
+                WHERE c.year = $year AND c.code = '$class'
+                ORDER BY 1";
     return $mysqli->execute_query($query);
 }
 
@@ -243,6 +243,8 @@ function showStudentData($mysqli)
       <th>Név</th>
       <th>Nem</th>
       <th>Jegyek</th>
+      <th>Átlagok</th>
+      <th>Összátlag</th>
     </tr>";
     $students = $result->fetch_all(MYSQLI_ASSOC);
     foreach ($students as $student)
@@ -253,18 +255,53 @@ function showStudentData($mysqli)
             showMessage("Hiba: Nem sikerült lekérni a tanuló jegyeit!", true);
             return;
         }
+        $grades = getGrades($result);
         echo "<tr>";
         echo "<td>" . $student['name'] . "</td>";
         echo "<td>" . ($student['gender'] === 0 ? "férfi" : "nő") . "</td>";
         echo "<td>";
-        showGrades($result);
+        showGrades($grades);
+        echo "</td>";
+        echo "<td>";
+        showSubjectAverages($grades);
+        echo "</td>";
+        echo "<td>";
+        showAllAverage($grades);
         echo "</td>";
         echo "</tr>";
     }
     echo "</table>";
 }
 
-function showGrades($result)
+function showGrades($grades)
+{
+    foreach ($grades as $subject => $gradeNums)
+    {
+        echo "$subject: " . implode(", ", $gradeNums) . "<br>";
+    }
+}
+
+function showSubjectAverages($grades)
+{
+    foreach ($grades as $subject => $gradeNums)
+    {
+        $avg = array_sum($gradeNums) / count($gradeNums);
+        echo "$subject: $avg<br>";
+    }
+}
+
+function showAllAverage($grades)
+{
+    $avgs = [];
+    foreach ($grades as $subject => $gradeNums)
+    {
+        $avgs[] = array_sum($gradeNums) / count($gradeNums);
+    }
+    $avg = array_sum($avgs) / count($avgs);
+    echo "$avg<br>";
+}
+
+function getGrades($result)
 {
     $grades = [];
     $gradeResult = $result->fetch_all(MYSQLI_ASSOC);
@@ -278,10 +315,7 @@ function showGrades($result)
         }
         $grades[$subject][] = $gradeNum;
     }
-    foreach ($grades as $subject => $gradeNums)
-    {
-        echo "$subject: " . implode(", ", $gradeNums) . "<br>";
-    }
+    return $grades;
 }
 
 function handlePostRequest($mysqli)

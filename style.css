@@ -16,7 +16,7 @@ body {
     text-align: center;
 }
 
-p, li {
+p, li, label, button, select {
     font-size: 150%;
 }
 
