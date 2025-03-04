@@ -1,5 +1,5 @@
 <?php
-function getSQLConnection($host = "localhost", $user = "root", $password = "", $database = NULL)
+function getSQLConnection($host = "localhost", $user = "root", $password = "huba", $database = NULL)
 {
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $mysqli = new mysqli($host, $user, $password, $database);

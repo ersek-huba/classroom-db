@@ -16,8 +16,12 @@ body {
     text-align: center;
 }
 
-p, li, label, button, select {
+p, li, label, button, select, input {
     font-size: 150%;
+}
+
+.normal {
+    font-size: 100%;
 }
 
 .center-table {

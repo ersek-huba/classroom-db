@@ -86,6 +86,11 @@ function showQueryButton($mysqli)
     echo '<button type="submit" name="query" value="0" class="center">Adatok lekérése</button>';
 }
 
+function showAdminButton()
+{
+    echo '<a href="localhost:8080/admin.php"><button class="center">Admin nézet</button></a>';
+}
+
 function showMessage($msg, $error = false)
 {
     if ($error)

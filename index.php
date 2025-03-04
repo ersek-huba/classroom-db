@@ -10,6 +10,7 @@ showInstallButton($mysqli);
 showYearDropdown($mysqli);
 showClassDropdown($mysqli);
 showQueryButton($mysqli);
+showAdminButton();
 formEnd();
 handlePostRequest($mysqli);
 htmlEnd();
