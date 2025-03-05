@@ -88,7 +88,7 @@ function showQueryButton($mysqli)
 
 function showAdminButton()
 {
-    echo '<a href="localhost:8080/admin.php"><button class="center">Admin nézet</button></a>';
+    echo '<button type="submit" name="admin-switch" value="0" class="center">Admin nézet</button>';
 }
 
 function showMessage($msg, $error = false)
@@ -332,8 +332,12 @@ function handlePostRequest($mysqli)
             installDatabase($mysqli);
         }
     }
-    else if (isset($_POST["query"]))
+    elseif (isset($_POST["query"]))
     {
         showClassStatistics($mysqli);
+    }
+    elseif (isset($_POST['admin-switch']))
+    {
+        header("Location: localhost:8080/admin.php");
     }
 }

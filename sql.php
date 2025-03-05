@@ -1,5 +1,5 @@
 <?php
-function getSQLConnection($host = "localhost", $user = "root", $password = "huba", $database = NULL)
+function getSQLConnection($host = "localhost", $user = "root", $password = "", $database = NULL)
 {
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     $mysqli = new mysqli($host, $user, $password, $database);
@@ -164,3 +164,12 @@ function generateRandomNumbers($min, $max, $count)
     return $ret;
 }
 
+function getRowFromTable($mysqli, $table, $id)
+{
+    $result = $mysqli->execute_query("SELECT * FROM $table WHERE id = $id");
+    if (!$result)
+    {
+        return NULL;
+    }
+    return $result->fetch_assoc();
+}

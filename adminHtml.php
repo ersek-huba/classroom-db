@@ -20,7 +20,7 @@ function showAdminViewButton($mysqli)
 function showNewButton($mysqli)
 {
     $table = $_POST['table'];
-    echo "<button type='submit' name='new' value='$table' class='center'>Új rekord felvétele</button>";
+    echo "<button type='submit' name='new' value='$table' class='center normal'>Új rekord felvétele</button>";
 }
 
 function handleAdminPostRequest($mysqli)
@@ -35,7 +35,10 @@ function handleAdminPostRequest($mysqli)
     }
     elseif (isset($_POST['change']))
     {
-        showEditForm($mysqli, $_POST['change']);
+        $changeInfo = explode(';', $_POST['change']);
+        $table = $changeInfo[0];
+        $id = intval($changeInfo[1]);
+        showEditForm($mysqli, $table, $id);
     }
     elseif (isset($_POST['delete']))
     {
@@ -45,11 +48,15 @@ function handleAdminPostRequest($mysqli)
     {
         insertIntoTable($mysqli);
     }
+    elseif (isset($_POST['modify']))
+    {
+        updateTable($mysqli);
+    }
 }
 
 function getFieldNameValues($mysqli)
 {
-    $table = $_POST['save'];
+    $table = $_POST['save'] ?? explode(';', $_POST['modify'])[0];
     $_POST['table'] = $table;
     $fields = array_slice(getFieldNames($mysqli), 1);
     unset($_POST['table']);
@@ -82,15 +89,19 @@ function insertIntoTable($mysqli)
 
 function updateTable($mysqli)
 {
-    $table = $_POST['save'];
+    $modifyInfo = explode(';', $_POST['modify']);
+    $table = $modifyInfo[0];
+    $id = intval($modifyInfo[1]);
     $fieldNameValues = getFieldNameValues($mysqli);
     $firstKey = array_key_first($fieldNameValues);
     $args = "$firstKey = ?";
+    $values = [$fieldNameValues[$firstKey]];
     foreach ($fieldNameValues as $name => $value)
     {
         $args = $args . ", $name = ?";
+        $values[] = $value;
     }
-    $query = "UPDATE $table SET $args WHERE id = " . $_POST['id'];
+    $query = "UPDATE $table SET $args WHERE id = $id";
     $result = $mysqli->execute_query($query, $values);
     if (!$result)
     {
@@ -101,22 +112,26 @@ function updateTable($mysqli)
         showMessage("A rekord fel lett töltve.");
     }
 }
-// FIXME
-function showEditForm($mysqli, $tableName, $values = [])
+
+function showEditForm($mysqli, $tableName, $id = 0)
 {
     echo "<h1 class='center'>Rekord szerkesztése</h1>";
     $_POST['table'] = $tableName;
     $fields = array_slice(getFieldNames($mysqli), 1);
     unset($_POST['table']);
-    $i = 0;
+    if ($id !== 0)
+    {
+        $values = getRowFromTable($mysqli, $tableName, $id);
+    }
     foreach ($fields as $field)
     {
-        $value = isset($values[$i]) ? $values[$i] : "";
+        $value = $id === 0 ? "" : $values[$field];
         echo "<label for='$field' class='center'>$field </label>";
-        echo "<input id='$field' type='text' name='$field'>$value</input><br>";
-        $i++;
+        echo "<input id='$field' type='text' name='$field' value='$value'></input><br>";
     }
-    echo "<button type='submit' name='save' value='$tableName'>Mentés</button>";
+    $name = $id === 0 ? "save" : "modify";
+    $value = "$tableName" . ($id === 0 ? "" : ";$id");
+    echo "<button type='submit' name='$name' value='$value'>Mentés</button>";
 }
 
 function deleteRecord($mysqli)
@@ -139,7 +154,6 @@ function showTableView($mysqli)
 {
     if (isset($_POST['table']))
     {
-        showNewButton($mysqli);
         echo "<h1 class='center'>" . $_POST['table'] . "</h1>";
         tableHead($mysqli);
         fillTableWithData($mysqli);
@@ -175,8 +189,9 @@ function tableHead($mysqli)
     {
         echo "<th>$field</th>";
     }
-    echo "<th>Módósítás</th>";
-    echo "<th>Törlés</th>";
+    echo "<th colspan='2'>";
+    showNewButton($mysqli);
+    echo "</th>";
     echo "</tr>";
 }
 
